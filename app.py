@@ -3,6 +3,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import json
+from urllib.request import Request, urlopen
 from sklearn.ensemble import IsolationForest
 
 st.set_page_config(
@@ -97,6 +99,77 @@ if uploaded_file is not None:
             f"Investigated {len(df)} records and "
             f"detected {len(anomalies)} unusual records."
         )
+
+        # Gemma AI Integration
+        st.subheader("🤖 Ask Ghost AI - Powered by Gemma")
+
+        st.write(
+            "Let Gemma investigate your dataset "
+            "and explain the unusual patterns."
+        )
+
+        if st.button("👻 Investigate with Gemma AI"):
+
+            prompt = f"""
+            You are Ghost, a careful and helpful data analyst.
+
+            Analyze these dataset investigation results.
+
+            Total records: {len(df)}
+            Total columns: {len(df.columns)}
+            Missing values: {int(df.isnull().sum().sum())}
+            Anomalies detected: {len(anomalies)}
+
+            Numerical data summary:
+            {numeric_df.describe().round(2).to_string()}
+
+            Sample unusual records:
+            {anomalies.head(5).drop(
+                columns=["Ghost Status"]
+            ).to_string(index=False)}
+
+            Explain:
+            1. What unusual patterns were detected?
+            2. What could explain these unusual values?
+            3. What should a data analyst investigate next?
+
+            Do not assume anomalies are errors or wrongdoing.
+            Do not claim causation without evidence.
+            Keep the explanation clear and concise.
+            """
+
+            try:
+                with st.spinner(
+                    "👻 Gemma is investigating your dataset..."
+                ):
+                    payload = json.dumps({
+                        "model": "gemma2:2b",
+                        "prompt": prompt,
+                        "stream": False
+                    }).encode("utf-8")
+
+                    request = Request(
+                        "http://localhost:11434/api/generate",
+                        data=payload,
+                        headers={
+                            "Content-Type": "application/json"
+                        }
+                    )
+
+                    with urlopen(request, timeout=180) as response:
+                        result_json = json.loads(
+                            response.read().decode("utf-8")
+                        )
+
+                    st.success("Ghost investigation completed!")
+                    st.write(result_json.get("response", "No response received."))
+
+            except Exception as error:
+                st.error(f"Gemma connection error: {error}")
+                st.info(
+                    "Please check that Ollama is running "
+                    "and Gemma 2B is installed."
+                )
 
         csv = result.to_csv(index=False).encode("utf-8")
 
