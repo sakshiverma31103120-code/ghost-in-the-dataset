@@ -30,7 +30,7 @@ Ghost in the Dataset is an AI-powered data analysis application that investigate
 ### 1. Clone the repository
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/sakshiverma31103120-code/ghost-in-the-dataset.git
 cd ghost-in-the-dataset
 ```
 
